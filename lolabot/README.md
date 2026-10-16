@@ -30,5 +30,3 @@ curl -fsSLO https://raw.githubusercontent.com/CamiloCaceres/claude-mail-watch/ma
 git apply --check watch.patch && git apply watch.patch && rm watch.patch
 tools/email.sh watch <account>   # first run: {"initialized": true, "new": []}
 ```
-
-(While the repository is private, download `watch.patch` with `gh` or from a clone instead of `curl`.)

@@ -85,10 +85,6 @@ claude plugin install mail-watch --marketplace CamiloCaceres/claude-mail-watch
 In the desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**,
 **Add marketplace** with `CamiloCaceres/claude-mail-watch`, then **Add plugin**.
 
-> [!IMPORTANT]
-> While this repository is private, installing needs read access to it on GitHub and a git credential for
-> github.com on your machine (an SSH key, or `gh auth login` followed by `gh auth setup-git`).
-
 ### Or let your agent install it
 
 Paste this to the agent that should receive mail:
