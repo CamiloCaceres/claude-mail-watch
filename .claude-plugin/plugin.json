@@ -1,0 +1,73 @@
+{
+  "name": "mail-watch",
+  "version": "0.1.0",
+  "description": "Gives your Claude Code agent an inbox: it watches a mailbox and wakes the session when trusted, authenticated mail arrives.",
+  "author": { "name": "Camilo Caceres" },
+  "homepage": "https://github.com/CamiloCaceres/claude-mail-watch",
+  "repository": "https://github.com/CamiloCaceres/claude-mail-watch",
+  "license": "MIT",
+  "keywords": ["email", "imap", "agent", "lolabot", "notifications", "mod"],
+  "userConfig": {
+    "account": {
+      "type": "string",
+      "title": "Mailbox address",
+      "description": "The inbox to watch, e.g. agent@example.com. Leave empty to keep the watch off.",
+      "default": ""
+    },
+    "engine": {
+      "type": "string",
+      "title": "Engine",
+      "description": "auto: lolabot when the session's folder has tools/email.sh, standalone otherwise. lolabot: only in lolabot folders. standalone: the built-in IMAP watcher.",
+      "options": ["auto", "lolabot", "standalone"],
+      "default": "auto"
+    },
+    "trustedSenders": {
+      "type": "string",
+      "title": "Trusted senders (standalone)",
+      "description": "Comma-separated addresses whose authenticated mail wakes the agent. lolabot uses its own operator_emails instead.",
+      "default": ""
+    },
+    "imapHost": {
+      "type": "string",
+      "title": "IMAP server (standalone)",
+      "description": "e.g. imap.purelymail.com or imap.gmail.com. The login is the mailbox address.",
+      "default": ""
+    },
+    "imapPort": {
+      "type": "number",
+      "title": "IMAP port (standalone)",
+      "description": "IMAP over SSL.",
+      "default": 993
+    },
+    "passwordEnv": {
+      "type": "string",
+      "title": "Password variable (standalone)",
+      "description": "Name of the environment variable, or the key in the project's .env file, that holds the mailbox password.",
+      "default": "MAIL_WATCH_PASSWORD"
+    },
+    "pollMinutes": {
+      "type": "number",
+      "title": "Check every (minutes)",
+      "description": "How often to look for new mail.",
+      "default": 2
+    },
+    "folder": {
+      "type": "string",
+      "title": "Only in this folder",
+      "description": "Absolute path. When set, the watch runs only in sessions started in this folder, so other sessions don't answer mail too.",
+      "default": ""
+    },
+    "instructions": {
+      "type": "string",
+      "title": "Extra instructions",
+      "description": "Added to the end of every wake-up prompt, e.g. who may ask for what.",
+      "default": ""
+    },
+    "python": {
+      "type": "string",
+      "title": "Python (standalone)",
+      "description": "The Python 3.9+ the built-in watcher runs with.",
+      "default": "python3"
+    }
+  }
+}

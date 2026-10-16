@@ -1,0 +1,82 @@
+--- a/tools/email_client.py	2026-10-16 17:15:28
++++ b/tools/email_client.py	2026-10-16 17:15:28
+@@ -1340,6 +1340,59 @@
+     print(f"Migration complete: {updated}/{total} emails updated with security metadata")
+ 
+ 
++def cmd_watch(account_email: str):
++    """Print JSON of inbox messages that arrived since the last watch run.
++
++    Tracks the highest IMAP UID already reported in emails/<account>/watch-state.json.
++    The first run records the current inbox and reports nothing, so old mail is not
++    announced. Reads headers only (BODY.PEEK), so nothing is marked as read. `trust`
++    is by address alone; authentication is checked when the message is read.
++    """
++    from email_sanitizer import resolve_trust
++    config = get_account_config(account_email)
++    state_path = Path(EMAILS_DIR) / account_email / "watch-state.json"
++    state = {}
++    if state_path.exists():
++        try:
++            state = json.loads(state_path.read_text())
++        except (OSError, ValueError):
++            state = {}
++
++    mail = connect_imap(config)
++    mail.select("INBOX", readonly=True)
++    typ, data = mail.uid("SEARCH", None, "ALL")
++    uids = sorted(int(u) for u in (data[0].split() if typ == "OK" and data and data[0] else []))
++    typ, vdata = mail.status("INBOX", "(UIDVALIDITY)")
++    m = re.search(rb"UIDVALIDITY (\d+)", vdata[0] if typ == "OK" and vdata else b"")
++    validity = int(m.group(1)) if m else None
++
++    last = state.get("last_uid")
++    if last is None or state.get("uidvalidity") != validity:
++        result = {"account": account_email, "initialized": True, "new": []}
++        last = max(uids, default=0)
++    else:
++        result = {"account": account_email, "initialized": False, "new": []}
++        for uid in (u for u in uids if u > last):
++            typ, msg_data = mail.uid("FETCH", str(uid), "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])")
++            if typ != "OK" or not msg_data or not isinstance(msg_data[0], tuple):
++                continue
++            seq = msg_data[0][0].split(b" ", 1)[0].decode()
++            msg = email.message_from_bytes(msg_data[0][1])
++            sender = decode_mime_header(msg.get("From", ""))
++            result["new"].append({
++                "id": seq, "uid": uid, "from": sender,
++                "subject": decode_mime_header(msg.get("Subject", "(no subject)")),
++                "date": msg.get("Date", ""),
++                "trust": resolve_trust(sender)["level"],
++            })
++        last = max(uids, default=last)
++    mail.logout()
++
++    state_path.parent.mkdir(parents=True, exist_ok=True)
++    state_path.write_text(json.dumps({"last_uid": last, "uidvalidity": validity}))
++    print(json.dumps(result))
++
++
+ def main():
+     parser = argparse.ArgumentParser(description="Lola Email Client")
+     subparsers = parser.add_subparsers(dest="command", help="Command")
+@@ -1349,6 +1402,10 @@
+     p_check.add_argument("account", help="Email account")
+     p_check.add_argument("-n", "--limit", type=int, default=20, help="Number of emails to show")
+ 
++    # watch
++    p_watch = subparsers.add_parser("watch", help="JSON of inbox mail that arrived since the last watch run")
++    p_watch.add_argument("account", help="Email account")
++
+     # read
+     p_read = subparsers.add_parser("read", help="Read a specific email")
+     p_read.add_argument("account", help="Email account")
+@@ -1456,6 +1513,8 @@
+         cmd_sent_log(args.account, args.limit)
+     elif args.command == "verify":
+         cmd_verify(args.account, args.ref)
++    elif args.command == "watch":
++        cmd_watch(args.account)
+ 
+ 
+ if __name__ == "__main__":

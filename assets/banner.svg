@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="t d">
+  <title id="t">mail-watch</title>
+  <desc id="d">A Claude Code mod that gives your agent an inbox and wakes it when trusted mail arrives.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14110f"/>
+      <stop offset="1" stop-color="#2a1d17"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#d97757" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#d97757" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#grid)"/>
+
+  <!-- envelope with a wake pulse -->
+  <g transform="translate(250 200)">
+    <circle r="150" fill="url(#glow)"/>
+    <circle r="112" fill="none" stroke="#d97757" stroke-opacity="0.18" stroke-width="2"/>
+    <circle r="138" fill="none" stroke="#d97757" stroke-opacity="0.09" stroke-width="2"/>
+    <rect x="-80" y="-54" width="160" height="108" rx="14" fill="#1d1714" stroke="#f0e6dc" stroke-width="5"/>
+    <path d="M-72 -44 L0 12 L72 -44" fill="none" stroke="#f0e6dc" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="70" cy="-48" r="22" fill="#d97757" stroke="#14110f" stroke-width="5"/>
+    <path d="M61 -48 l6 6 l12 -13" fill="none" stroke="#14110f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- words -->
+  <g font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="470" y="178" fill="#f0e6dc" font-size="84" font-weight="700" letter-spacing="-2">mail-watch</text>
+    <text x="474" y="230" fill="#cdbfb3" font-size="30">Give your Claude Code agent an inbox.</text>
+    <text x="474" y="270" fill="#9c8b7e" font-size="22">Trusted, authenticated mail wakes the session. Everything else just knocks.</text>
+    <g transform="translate(474 304)" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18">
+      <rect width="324" height="40" rx="8" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+      <text x="16" y="26" fill="#d97757">[EMAIL]</text>
+      <text x="100" y="26" fill="#cdbfb3">from boss@example.com</text>
+    </g>
+  </g>
+</svg>

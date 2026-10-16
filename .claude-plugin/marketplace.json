@@ -1,0 +1,16 @@
+{
+  "name": "claude-mail-watch",
+  "owner": {
+    "name": "Camilo Caceres"
+  },
+  "metadata": {
+    "description": "mail-watch: a Claude Code mod that wakes your agent when trusted mail arrives"
+  },
+  "plugins": [
+    {
+      "name": "mail-watch",
+      "source": "./",
+      "description": "Gives your Claude Code agent an inbox: it watches a mailbox and wakes the session when trusted, authenticated mail arrives."
+    }
+  ]
+}
