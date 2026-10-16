@@ -10,60 +10,61 @@
 </p>
 
 <p align="center">
-  <b>Email your agent and it answers.</b><br>
-  mail-watch keeps an eye on a mailbox from inside an open Claude Code session. When a trusted sender writes,
-  and the message proves it really came from them, the session wakes up and gets to work.
+  <b>A Claude Code mod that wakes your session when an email arrives.</b><br>
+  Leave a session open, email it from anywhere, and it starts working. No chat bridge, no webhook, no open port.
 </p>
 
 ---
 
-## Why
+## What it is
 
-A Claude Code agent can sit in a terminal for days, but it only acts when someone types. mail-watch lets
-the people you trust reach it from anywhere, with no chat bridge, no webhook and no open port.
+mail-watch does one job: it watches an inbox, and when a **trusted sender's email** arrives, it wakes the
+open Claude Code session with an `[EMAIL]` prompt. That's all. It doesn't write replies, keep memory or
+make decisions. What happens after the wake-up is up to the session.
 
 - 📬 **Checks an IMAP inbox** every couple of minutes (headers only, nothing marked as read)
 - ⚡ **Wakes the session** with an `[EMAIL]` prompt when a trusted sender writes
 - 🛡️ **Checks the sender is real**: DMARC, or DKIM/SPF aligned with the sender's domain, as stamped by your mail server
-- 🚫 **Ignores impostors**: mail that claims a trusted address but fails authentication never reaches the agent
+- 🚫 **Ignores impostors**: mail that claims a trusted address but fails authentication never reaches Claude
 - 🔔 **Lets everything else knock**: other mail shows up as a notification and a status-line count, nothing more
-- 🧩 **Two engines**: plugs into [lolabot](https://github.com/23blocks-OS/lolabot), or runs standalone with a built-in watcher
 
 ## How it works
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant You as You (trusted sender)
-    participant Box as Your mailbox (IMAP)
-    participant Mod as mail-watch (in the session)
-    participant Agent as Claude Code agent
-    You->>Box: "Can you deploy the new version?"
+    participant Sender as You (trusted sender)
+    participant Inbox as Your mailbox (IMAP)
+    participant Watch as mail-watch (in the session)
+    participant Claude as Claude Code session
+    Sender->>Inbox: Can you deploy the new version?
     loop every 2 minutes
-        Mod->>Box: Anything new since last time? (headers only)
+        Watch->>Inbox: Anything new since last time? (headers only)
     end
-    Box-->>Mod: 1 new message, dmarc=pass, from a trusted address
-    Mod->>Agent: [EMAIL] New email from you. Subject: ...
-    Agent->>Agent: Reads it, does the work
-    Agent-->>You: Replies by email (with lolabot)
+    Inbox-->>Watch: 1 new message, dmarc=pass, from a trusted address
+    Watch->>Claude: [EMAIL] New email from you. Subject: ...
+    Claude->>Claude: Reads it and gets to work
 ```
 
-## Two engines
+## Want a real email agent? Add lolabot
 
-| | **lolabot** (recommended) | **standalone** |
+mail-watch is the doorbell. **[lolabot](https://github.com/23blocks-OS/lolabot)** is who answers it: it turns a
+Claude Code folder into a persistent assistant with an identity, memory, skills and its own hardened mail
+client. Put mail-watch in a lolabot folder and you get an agent that lives on email.
+
+| | **mail-watch on its own** | **mail-watch + lolabot** |
 |---|---|---|
-| What it is | Uses [lolabot](https://github.com/23blocks-OS/lolabot)'s email tools in the session's folder | A small IMAP watcher built into the mod (Python standard library) |
-| Setup | Mailbox address only. Credentials and trusted senders come from lolabot | IMAP server, password, trusted senders |
-| Reading mail | `tools/email.sh read`, through lolabot's sanitizer: prompt-injection scan, HTML cleanup, attachment blocking, quarantine | The text of trusted mail is handed to the agent in the wake-up prompt |
-| Replying | `tools/email.sh reply`, with delivery verified in the Sent folder | Up to your agent's own tools |
-| Picked when | The folder has `tools/email.sh` (`engine: auto`) | The folder has no lolabot and `imapHost` is set |
+| What wakes up | A plain Claude Code session | A lolabot agent with its own identity, memory and skills |
+| Reading the email | Its text goes straight into the wake-up prompt | `tools/email.sh read`, through lolabot's sanitizer: prompt-injection scan, HTML cleanup, attachment blocking, quarantine |
+| Replying | Not built in: up to the session's own tools | `tools/email.sh reply`, delivery verified in the Sent folder |
+| Who may ask for what | One line of `instructions` you add to every wake-up | The agent's own rules (`CLAUDE.md`) and operator list |
+| Setup | IMAP server, password, trusted senders | Mailbox address only: lolabot already has the rest |
 
-**mail-watch works on its own**, but if your agent lives on email we recommend
-**[lolabot](https://github.com/23blocks-OS/lolabot)**. It turns a Claude Code folder into a persistent assistant with
-memory, skills and a hardened mail client, and mail-watch is the doorbell for it.
+You don't have to choose anything: when the session's folder has lolabot's `tools/email.sh`, mail-watch uses it
+automatically. Otherwise it uses its own built-in watcher (a small Python script, standard library only).
 
 > [!NOTE]
-> The lolabot engine calls `tools/email.sh watch`. lolabot 1.2.0 doesn't have that command yet; apply
+> mail-watch calls `tools/email.sh watch`, which lolabot 1.2.0 doesn't have yet. Apply
 > [`lolabot/watch.patch`](lolabot/) to add it (one new function, nothing else changes).
 
 ## Install
@@ -98,13 +99,13 @@ project, so you wake up when I email you. Read its README first, then:
 
 1. Run: claude plugin marketplace add CamiloCaceres/claude-mail-watch
 2. Ask me which mailbox you should watch and whose mail you should act on.
-3. If this folder is a lolabot (it has tools/email.sh): use the lolabot engine. If `tools/email.sh watch`
-   doesn't exist, apply lolabot/watch.patch from the repo. Otherwise use the standalone engine: ask me for
-   the IMAP server, and have me add the mailbox password to .env as MAIL_WATCH_PASSWORD myself. Check that
+3. If this folder is a lolabot (it has tools/email.sh), lolabot already knows the mailbox: if
+   `tools/email.sh watch` doesn't exist, apply lolabot/watch.patch from the repo. Otherwise ask me for the
+   IMAP server, and have me add the mailbox password to .env as MAIL_WATCH_PASSWORD myself. Check that
    .env is gitignored, and never print, read back or ask me for the password.
 4. Install: claude plugin install mail-watch@claude-mail-watch --scope project \
      --config account=<mailbox> --config folder=<absolute path of this folder> \
-     (standalone only: --config imapHost=<server> --config trustedSenders=<a@x.com,b@y.com>)
+     (without lolabot, add: --config imapHost=<server> --config trustedSenders=<a@x.com,b@y.com>)
 5. Tell me to restart the session, then run /mail-check and show me the result.
 ```
 
@@ -116,14 +117,14 @@ Set these on the install screen, with `/plugin configure mail-watch@claude-mail-
 | Option | Default | What it does |
 |---|---|---|
 | `account` | (empty) | The mailbox to watch. **Empty keeps the watch off.** |
-| `engine` | `auto` | `auto`, `lolabot` or `standalone` (see [Two engines](#two-engines)) |
+| `engine` | `auto` | `auto` uses lolabot when the folder has it, the built-in watcher otherwise. `lolabot` or `standalone` forces one |
 | `folder` | (empty) | Absolute path. Watch only in sessions started in this folder. **Recommended**, so other sessions don't answer mail too |
 | `pollMinutes` | `2` | How often to check |
 | `instructions` | (empty) | Added to every wake-up prompt, e.g. `Anna may ask for deploys; check with me before deleting anything.` |
-| `trustedSenders` | (empty) | *Standalone.* Comma-separated addresses whose authenticated mail wakes the agent |
-| `imapHost` / `imapPort` | (empty) / `993` | *Standalone.* IMAP over SSL; the login is `account` |
-| `passwordEnv` | `MAIL_WATCH_PASSWORD` | *Standalone.* An environment variable, or a key in the project's `.env`, holding the password |
-| `python` | `python3` | *Standalone.* Python 3.9+ to run the watcher with |
+| `trustedSenders` | (empty) | *Without lolabot.* Comma-separated addresses whose authenticated mail wakes the agent |
+| `imapHost` / `imapPort` | (empty) / `993` | *Without lolabot.* IMAP over SSL; the login is `account` |
+| `passwordEnv` | `MAIL_WATCH_PASSWORD` | *Without lolabot.* An environment variable, or a key in the project's `.env`, holding the password |
+| `python` | `python3` | *Without lolabot.* Python 3.9+ to run the watcher with |
 
 Once it's running:
 
@@ -143,7 +144,7 @@ mail-watch decides one thing: **does this message get to wake the agent?**
 
 - **Authenticated** means the topmost `Authentication-Results` header, the one your own mail server added,
   shows `dmarc=pass`, or a `dkim=pass`/`spf=pass` whose domain matches the sender's. Lower headers can be
-  written by any sender and are ignored. With lolabot, its own sender check applies instead.
+  written by any sender and are ignored. With lolabot, lolabot's own sender check applies instead.
 - **The password never passes through the mod.** The watcher reads it from the environment or `.env` itself
   and never prints it.
 - **Mail is not an instruction channel by itself.** The wake-up prompt says the email is the sender's request,
